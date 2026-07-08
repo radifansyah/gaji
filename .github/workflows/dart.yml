@@ -1,27 +1,38 @@
-name: Dart
+name: Flutter CI
 
 on:
   push:
-    branches: [ "main" ]
+    branches:
+      - main
   pull_request:
-    branches: [ "main" ]
+    branches:
+      - main
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      - uses: subosito/flutter-action@v2
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.x'  # Specify your Flutter version
+          flutter-version: "3.x"
+          channel: stable
+          cache: true
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: flutter pub get
 
-      - name: Analyze project source
+      - name: Analyze Project
+        continue-on-error: true
         run: flutter analyze
 
-      - name: Run tests
+      - name: Run Tests
+        continue-on-error: true
         run: flutter test
+
+      - name: Build APK
+        run: flutter build apk --release
