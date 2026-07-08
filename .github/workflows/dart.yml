@@ -8,30 +8,24 @@ jobs:
     name: 🎉 iOS Build
     runs-on: macos-latest
     steps:
-      # 1. Checkout kode menggunakan versi terbaru yang mendukung Node modern
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      # 2. Setup Flutter SDK dengan benar
       - name: Setup Flutter SDK
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
-          # Menghapus paksaan arsitektur agar mencakup semua kecocokan SDK otomatis
-          cache: true # Mengaktifkan cache agar proses pub get berikutnya lebih cepat
+          cache: true
 
-      # 3. Ambil dependensi (Sekarang Flutter SDK sudah dipastikan tersedia)
       - name: Install Dependencies
         run: flutter pub get
 
-      # 4. Jalankan analisis kode (opsional, untuk memastikan tidak ada error sintaks)
       - name: Analyze Project Code
         run: flutter analyze
 
-      # 5. Build iOS tanpa Code Signing
       - name: Build Xcode Project
         run: flutter build ios --release --no-codesign
 
-      # 6. Pembuatan struktur folder Payload untuk berkas .ipa
       - name: Create IPA Package
         run: |
           mkdir -p Payload
@@ -39,8 +33,7 @@ jobs:
           zip -qq -r -9 FlutterIpaExport.ipa Payload
         working-directory: build/ios/iphoneos
 
-      # 7. Unggah hasil akhir ke GitHub Release
-      - name: Upload binaries to release
+      - name: Upload Binaries to Release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
