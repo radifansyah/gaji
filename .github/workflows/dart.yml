@@ -1,38 +1,46 @@
-name: Flutter CI
+name: iOS-ipa-build
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-
+  build-ios:
+    name: 🎉 iOS Build
+    runs-on: macos-latest
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      # 1. Checkout kode dari repositori
+      - uses: actions/checkout@v4
 
-      - name: Setup Flutter
-        uses: subosito/flutter-action@v2
+      # 2. Setup Flutter (Arsitektur disesuaikan dengan Apple Silicon macos-latest)
+      - uses: subosito/flutter-action@v2
         with:
-          flutter-version: "3.x"
-          channel: stable
-          cache: true
+          channel: 'stable'
+          architecture: arm64 # Diubah dari x64 ke arm64 karena runner macos-latest sekarang menggunakan M1/M2
 
-      - name: Install Dependencies
-        run: flutter pub get
+      # 3. Ambil dependensi Flutter
+      - run: flutter pub get
 
-      - name: Analyze Project
-        continue-on-error: true
+      # 4. Langkah Analisis Kode (Memastikan tidak ada error sebelum di-build)
+      - name: Analyze Project Code
         run: flutter analyze
 
-      - name: Run Tests
-        continue-on-error: true
-        run: flutter test
+      # 5. Build iOS tanpa Code Signing (Menghasilkan Runner.app)
+      - run: flutter build ios --release --no-codesign
 
-      - name: Build APK
-        run: flutter build apk --release
+      # 6. Membuat berkas .ipa (Payload)
+      - name: Create IPA Package
+        run: |
+          mkdir -p Payload
+          mv Runner.app/ Payload/
+          zip -qq -r -9 FlutterIpaExport.ipa Payload
+        working-directory: build/ios/iphoneos
+
+      # 7. Upload file .ipa ke GitHub Release
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: build/ios/iphoneos/FlutterIpaExport.ipa
+          tag: v1.0
+          overwrite: true
+          body: "This is first release"
