@@ -6,26 +6,33 @@ on:
 jobs:
   build-ios:
     name: 🎉 iOS Build
+    # WAJIB menggunakan macos-latest untuk build IPA/iOS
     runs-on: macos-latest
     steps:
+      # 1. Mengambil kode dari repositori
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # 2. Setup Flutter SDK (Bukan dart-lang/setup-dart)
       - name: Setup Flutter SDK
         uses: subosito/flutter-action@v2
         with:
           channel: 'stable'
           cache: true
 
+      # 3. Mengambil dependensi Flutter yang valid
       - name: Install Dependencies
         run: flutter pub get
 
+      # 4. Validasi/Analisis kode (Opsional)
       - name: Analyze Project Code
         run: flutter analyze
 
+      # 5. Kompilasi project iOS tanpa Code Signing
       - name: Build Xcode Project
         run: flutter build ios --release --no-codesign
 
+      # 6. Membungkus Runner.app menjadi file .ipa
       - name: Create IPA Package
         run: |
           mkdir -p Payload
@@ -33,6 +40,7 @@ jobs:
           zip -qq -r -9 FlutterIpaExport.ipa Payload
         working-directory: build/ios/iphoneos
 
+      # 7. Mengunggah hasil jadi ke Release GitHub
       - name: Upload Binaries to Release
         uses: svenstaro/upload-release-action@v2
         with:
